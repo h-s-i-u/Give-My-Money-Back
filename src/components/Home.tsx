@@ -40,7 +40,7 @@ export default function Home({ onEnter }: { onEnter: (session: RoomSession) => v
             💸
           </div>
           <h1 className="bg-gradient-to-r from-cyan-300 to-violet-300 bg-clip-text text-3xl font-black tracking-tight text-transparent">
-            SplitParty
+            Give My Money Back
           </h1>
           <p className="mt-1 text-sm font-medium text-slate-400">
             Split bills together — no signup needed.

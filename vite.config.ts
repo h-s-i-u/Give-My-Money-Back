@@ -15,8 +15,8 @@ export default defineConfig({
       // Static assets (outside the JS/CSS bundle) the SW should precache.
       includeAssets: ["favicon.svg", "icons/apple-touch-icon-180x180.png"],
       manifest: {
-        name: "Split Bill App",
-        short_name: "SplitBill",
+        name: "Give My Money Back",
+        short_name: "GiveMeMoney",
         description: "Split bills together with friends — no signup needed.",
         // Match the dark-tech UI: slate-950 background, slate-950 chrome.
         theme_color: "#020617",

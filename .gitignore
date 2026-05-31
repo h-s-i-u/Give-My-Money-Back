@@ -49,3 +49,6 @@ Thumbs.db
 
 #Claude log
 .claude/
+
+# Other
+REQUIREMENTS.md
