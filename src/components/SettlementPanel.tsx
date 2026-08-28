@@ -1,10 +1,30 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getSettlement } from "../lib/billApi";
-import type { SettlementResult } from "../types";
+import type { Bill, SettlementResult } from "../types";
 
 const fmt = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 
-export default function SettlementPanel({ roomId }: { roomId: string }) {
+interface Props {
+  roomId: string;
+  /** The room's live ledger; the plan is re-derived whenever it changes. */
+  bills: Bill[];
+  billsLoaded: boolean;
+}
+
+/**
+ * Fingerprint of everything the settlement actually depends on. Editing a bill's
+ * description leaves this unchanged, so cosmetic edits don't trigger a needless
+ * round-trip to the Edge Function.
+ */
+function ledgerSignature(bills: Bill[]): string {
+  return bills
+    .filter((b) => b.status !== "deleted")
+    .map((b) => `${b.id}:${b.base_amount}:${b.payer_user_id}:${b.split_among.join("|")}`)
+    .sort()
+    .join(";");
+}
+
+export default function SettlementPanel({ roomId, bills, billsLoaded }: Props) {
   const [result, setResult] = useState<SettlementResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,17 +41,24 @@ export default function SettlementPanel({ roomId }: { roomId: string }) {
     }
   }, [roomId]);
 
-  // Calculate once on load; the button lets users refresh after new bills.
+  const signature = useMemo(() => ledgerSignature(bills), [bills]);
+
+  // Recalculate whenever the ledger changes — including changes pushed from
+  // another device over Realtime — so every member always sees the same plan
+  // without anyone having to press the button. Debounced so a burst of edits
+  // (or a Realtime batch) collapses into a single call.
   useEffect(() => {
-    void calculate();
-  }, [calculate]);
+    if (!billsLoaded) return; // don't settle an empty ledger that's still loading
+    const timer = setTimeout(() => void calculate(), 300);
+    return () => clearTimeout(timer);
+  }, [signature, billsLoaded, calculate]);
 
   return (
     <section className="card p-5">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-white">Final Settlement</h2>
         <button onClick={() => void calculate()} disabled={busy} className="btn-primary text-sm">
-          {busy ? "Calculating…" : "↻ Calculate"}
+          {busy ? "Calculating…" : "↻ Refresh"}
         </button>
       </div>
 

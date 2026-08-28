@@ -7,6 +7,8 @@ import type { Bill } from "../types";
 export interface RoomBillsState {
   bills: Bill[]; // newest first
   live: boolean;
+  /** False until the first snapshot resolves — distinguishes "loading" from "no bills". */
+  loaded: boolean;
 }
 
 const newestFirst = (a: Bill, b: Bill) => b.created_at.localeCompare(a.created_at);
@@ -19,21 +21,27 @@ const newestFirst = (a: Bill, b: Bill) => b.created_at.localeCompare(a.created_a
 export function useRoomBills(roomId: string | null): RoomBillsState {
   const [bills, setBills] = useState<Bill[]>([]);
   const [live, setLive] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     if (!roomId) {
       setBills([]);
       setLive(false);
+      setLoaded(false);
       return;
     }
 
     let cancelled = false;
+    setLoaded(false);
 
     getBills(roomId)
       .then((rows) => {
         if (!cancelled) setBills(rows);
       })
-      .catch((err) => console.error("Failed to load bills:", err));
+      .catch((err) => console.error("Failed to load bills:", err))
+      .finally(() => {
+        if (!cancelled) setLoaded(true);
+      });
 
     const channel = supabase
       .channel(`room-bills:${roomId}`)
@@ -72,5 +80,5 @@ export function useRoomBills(roomId: string | null): RoomBillsState {
     };
   }, [roomId]);
 
-  return { bills, live };
+  return { bills, live, loaded };
 }

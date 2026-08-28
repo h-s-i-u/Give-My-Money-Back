@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useRoomBills } from "../hooks/useRoomBills";
 import { useRoomMembers } from "../hooks/useRoomMembers";
 import AddBillForm from "./AddBillForm";
 import BillFeed from "./BillFeed";
@@ -13,6 +14,9 @@ interface Props {
 
 export default function RoomDashboard({ room, memberId, onLeave }: Props) {
   const { members, live } = useRoomMembers(room.id);
+  // Owned here rather than inside BillFeed so the settlement panel reads the
+  // same live ledger and re-derives its plan the instant a bill changes.
+  const { bills, live: billsLive, loaded: billsLoaded } = useRoomBills(room.id);
   const [copied, setCopied] = useState(false);
   const [editingBill, setEditingBill] = useState<Bill | null>(null);
 
@@ -90,10 +94,12 @@ export default function RoomDashboard({ room, memberId, onLeave }: Props) {
               editingBill={editingBill}
               onDoneEditing={() => setEditingBill(null)}
             />
-            <SettlementPanel roomId={room.id} />
+            <SettlementPanel roomId={room.id} bills={bills} billsLoaded={billsLoaded} />
           </div>
           <BillFeed
-            roomId={room.id}
+            bills={bills}
+            live={billsLive}
+            loaded={billsLoaded}
             baseCurrency={room.base_currency}
             members={members}
             currentMemberId={memberId}

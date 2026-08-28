@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { useRoomBills } from "../hooks/useRoomBills";
 import { confirmBillDelete, requestBillDelete } from "../lib/billApi";
 import type { Bill, RoomMember } from "../types";
 
 interface Props {
-  roomId: string;
+  /** Live ledger, owned by RoomDashboard and shared with the settlement panel. */
+  bills: Bill[];
+  live: boolean;
+  loaded: boolean;
   baseCurrency: string;
   members: RoomMember[];
   currentMemberId: string | null;
@@ -16,8 +18,15 @@ const fmt = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 
 const participantsOf = (b: Bill) =>
   Array.from(new Set([b.payer_user_id, ...b.split_among]));
 
-export default function BillFeed({ roomId, baseCurrency, members, currentMemberId, onEdit }: Props) {
-  const { bills, live } = useRoomBills(roomId);
+export default function BillFeed({
+  bills,
+  live,
+  loaded,
+  baseCurrency,
+  members,
+  currentMemberId,
+  onEdit,
+}: Props) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -147,7 +156,7 @@ export default function BillFeed({ roomId, baseCurrency, members, currentMemberI
         })}
         {bills.length === 0 && (
           <li className="rounded-xl border border-white/5 bg-white/[0.03] px-4 py-6 text-center text-sm text-slate-500">
-            No bills yet — add the first one!
+            {loaded ? "No bills yet — add the first one!" : "Loading bills…"}
           </li>
         )}
       </ul>
