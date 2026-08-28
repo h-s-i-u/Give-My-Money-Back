@@ -5,7 +5,7 @@ group meals — **Kahoot-style**. No registration required: create a room or ent
 to join, pick a nickname, and start tracking. When the activity ends, the system computes the
 minimum set of repayments needed to settle up.
 
-**🔗 Live demo: [give-my-money-back.vercel.app](https://give-my-money-back.vercel.app)** —
+**Demo link: [give-my-money-back](https://give-my-money-back.vercel.app)** —
 open it on two devices, join the same room code, and watch them stay in sync.
 
 ## Why I built this
