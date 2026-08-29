@@ -20,12 +20,12 @@ header-token identity model instead of accounts, the two-party confirmation befo
 disappears, and storing both the original and converted amounts so a later exchange-rate move
 can't silently rewrite what someone owes.
 
-## Screenshots
+## Demo
 
-**Real-time sync across devices** — two browsers in the same room; a bill added in one appears
-instantly in the other.
+**Real-time sync across devices** — two browsers in the same room. A bill added on one side shows
+up on the other instantly, and the settlement plan updates along with it.
 
-![Two browser windows in the same room, staying in sync](pic/desktop-realtime.png)
+![Screen recording: a bill added in the left browser appears instantly in the right one, with the settlement plan updating](pic/desktop-realtime.gif)
 
 | Room & bill entry | Settlement & activity feed |
 | :---: | :---: |
@@ -44,8 +44,8 @@ instantly in the other.
   currencies (JPY, USD, …); the original amount and the converted base amount are both stored so
   later exchange-rate drift doesn't affect settlement.
 - **Debt simplification** — A greedy heap-based algorithm minimizes the number of transactions
-  (e.g. *A owes B 100, B owes C 100* → *A pays C 100*). The plan re-derives itself automatically
-  whenever the ledger changes, so every device shows the same numbers without anyone refreshing.
+  (e.g. *A owes B 100, B owes C 100* → *A pays C 100*). The plan updates automatically as bills
+  change.
 - **Realtime sync + action log** — Powered by Supabase Realtime. All members see live updates and
   a running activity feed ("Ming added Dinner $500", "Hua confirmed Ming's repayment").
 - **PWA** — Installable on mobile via `vite-plugin-pwa`.
@@ -177,7 +177,3 @@ needs more than n−1 transfers, and is optimal for the shapes that actually occ
   the member-scoped read policies work over Realtime too (see the trade-off above).
 - **Exchange-rate caching.** Rates are fetched per bill submission; a short-lived cache would cut
   latency and make bill entry work offline-ish.
-
-## License
-
-Private project — not currently licensed for distribution.
