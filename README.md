@@ -37,9 +37,10 @@ up on the other instantly, and the settlement plan updates along with it.
   your identity token, so refreshing or reopening the browser automatically reclaims your
   nickname and history.
 - **Shared bill entry** — Every member can add bills. Only the bill's creator can edit it later.
-- **Two-party bill removal** — Bills are never hard-deleted. Removing one is a negotiation:
-  a participant requests it (`active → pending_delete`), and a *different* participant must
-  confirm before it becomes `deleted` — so nobody can quietly erase what they owe.
+- **Two-party settle / delete** — Bills are never hard-deleted. When a bill has been paid back (or
+  was entered by mistake), a participant hits **Delete / Settle** (`active → pending_delete`) and a
+  *different* participant must confirm before it closes — so nobody can unilaterally erase what
+  they owe.
 - **Multi-currency** — Set a base currency per room (e.g. TWD). Bills can be entered in other
   currencies (JPY, USD, …); the original amount and the converted base amount are both stored so
   later exchange-rate drift doesn't affect settlement.
@@ -154,26 +155,18 @@ but `users.token` is revoked at the *column* level so the credential can never b
 every write policy stays header-gated. The reasoning and the migration path (Supabase Anonymous
 Auth + `realtime.setAuth()`) are written up in `00002_realtime_and_room_rpcs.sql`.
 
-**Money is never floating point.** Balances are computed in integer minor units, and each bill's
-shares are distributed with the largest-remainder method so they sum to the bill total *exactly*.
-A room's balances therefore always sum to zero, no matter how the cents divide.
+**Money is computed in integers, and shown to two decimals on purpose.** Amounts are stored as
+`numeric(18,4)` — exact decimal, never a float — and balances are summed in integer minor units.
+Each bill's shares are distributed with the largest-remainder method so they add up to the bill
+total *exactly*, which is why a room's balances always sum to zero no matter how the cents divide.
+The plan is then shown to two decimal places rather than rounded to whole units: once a group is
+splitting across currencies like JPY and TWD, rounding would quietly shift real money between
+people, and some friends genuinely care about the last few dollars.
 
-**Deleting is a negotiation, not a button.** Any participant can request a delete; a *different*
-participant must confirm it. Bills are only ever soft-deleted, so the ledger stays auditable —
+**Closing a bill is a negotiation, not a button.** Any participant can request it; a *different*
+participant must confirm. Bills are only ever soft-deleted, so the ledger stays auditable —
 important when the whole point is that nobody can quietly edit what they owe.
 
 **Greedy, not optimal — on purpose.** Minimizing the number of transfers exactly is NP-hard (it
 reduces to subset-sum). The biggest-debtor-vs-biggest-creditor greedy runs in O(n log n), never
 needs more than n−1 transfers, and is optimal for the shapes that actually occur on a trip.
-
-## What's next
-
-- **Repayment confirmation UI.** The `debts` table already implements an
-  `unpaid → pending_confirm → settled` state machine, guarded by a Postgres trigger that rejects
-  illegal transitions (`00001_init.sql`) — the debtor marks "I paid", the creditor confirms
-  "I received", and the creditor can bounce it back. The schema and triggers are done; the
-  frontend for it isn't built yet, so today the settlement plan is advisory.
-- **Real auth for private rooms.** Swapping the header token for Supabase Anonymous Auth would let
-  the member-scoped read policies work over Realtime too (see the trade-off above).
-- **Exchange-rate caching.** Rates are fetched per bill submission; a short-lived cache would cut
-  latency and make bill entry work offline-ish.
